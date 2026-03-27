@@ -1,2 +1,20 @@
 node_modules/
 *.log
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Playwright artifacts (optional)
+playwright-report/
+test-results/

@@ -317,8 +317,14 @@ app.use("/api/webflow", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`SchemaFlow AI — http://localhost:${PORT}`);
-  console.log(`Webflow proxy: /api/webflow/*  →  ${WEBFLOW_V2}`);
-  console.log(`OpenAI: ${process.env.OPENAI_API_KEY ? "configured" : "NOT SET (add OPENAI_API_KEY to .env)"}`);
-});
+// Vercel: this file is imported by `api/index.js` and must not start a listener.
+// Local dev/prod: `npm start` runs this file directly, so we start the server.
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`SchemaFlow AI — http://localhost:${PORT}`);
+    console.log(`Webflow proxy: /api/webflow/*  →  ${WEBFLOW_V2}`);
+    console.log(`OpenAI: ${process.env.OPENAI_API_KEY ? "configured" : "NOT SET (add OPENAI_API_KEY to .env)"}`);
+  });
+}
+
+export default app;
