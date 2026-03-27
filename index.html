@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SchemaFlow AI – AEO & Structured Data Manager for Webflow</title>
+<link rel="icon" type="image/svg+xml" href="/SchemaFlow%20Favicon%201.svg" />
+<link rel="apple-touch-icon" href="/SchemaFlow%20Favicon%201.svg" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0D1117; --surface: #161B22; --card: #1C2333; --border: #30363D;
+  --border-h: #484F58; --accent: #2DD4BF; --accent-dim: rgba(45,212,191,.12);
+  --accent-h: #5EEAD4; --text1: #E6EDF3; --text2: #8B949E; --text3: #484F58;
+  --ok: #3FB950; --ok-d: rgba(63,185,80,.12); --warn: #D29922; --warn-d: rgba(210,153,34,.12);
+  --err: #F85149; --err-d: rgba(248,81,73,.12); --blue: #58A6FF; --blue-d: rgba(88,166,255,.12);
+  --ui: 'Plus Jakarta Sans', sans-serif; --code: 'JetBrains Mono', monospace;
+  --r1: 6px; --r2: 10px; --r3: 14px; --sw: 288px;
+}
+body { font-family: var(--ui); background: var(--bg); color: var(--text1); height: 100vh; overflow: hidden; font-size: 14px; line-height: 1.5; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-h); }
+
+.app { display: flex; flex-direction: column; height: 100vh; }
+.hdr { display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 54px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.bdy { display: flex; flex: 1; overflow: hidden; }
+.sbar { width: var(--sw); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+.logo { display: flex; align-items: center; gap: 9px; }
+.logo-ic { width: 180px; height: 38px; border-radius: var(--r1); overflow: hidden; background: var(--surface); display: flex; align-items: center; justify-content: center; }
+.logo-ic img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.bdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.b-ok { background: var(--ok-d); color: var(--ok); border: 1px solid var(--ok); }
+.b-no { background: var(--err-d); color: var(--err); border: 1px solid var(--err); }
+.b-dm { background: var(--blue-d); color: var(--blue); border: 1px solid var(--blue); }
+
+.sec { border-bottom: 1px solid var(--border); padding: 14px 16px; }
+.sec:last-child { border-bottom: none; flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+.sec-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); margin-bottom: 10px; }
+
+.inp { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r1); color: var(--text1); padding: 7px 10px; font-size: 12px; font-family: var(--ui); outline: none; transition: border-color .15s; }
+.inp:focus { border-color: var(--accent); }
+.inp::placeholder { color: var(--text3); }
+.inp-c { font-family: var(--code) !important; }
+.inp-g { margin-bottom: 9px; }
+.inp-lbl { font-size: 11px; color: var(--text2); margin-bottom: 4px; display: block; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 13px; border-radius: var(--r1); font-size: 12px; font-weight: 600; font-family: var(--ui); cursor: pointer; border: 1px solid transparent; transition: all .15s; white-space: nowrap; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-p { background: var(--accent); color: #0D1117; border-color: var(--accent); }
+.btn-p:hover:not(:disabled) { background: var(--accent-h); }
+.btn-o { background: transparent; color: var(--text1); border-color: var(--border); }
+.btn-o:hover:not(:disabled) { border-color: var(--border-h); background: var(--card); }
+.btn-s { background: var(--ok-d); color: var(--ok); border-color: var(--ok); }
+.btn-w { width: 100%; }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+
+.ls { overflow-y: auto; flex: 1; min-height: 0; padding-bottom: 4px; }
+.li { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: var(--r1); cursor: pointer; transition: background .1s; font-size: 13px; }
+.li:hover { background: var(--card); }
+.li.act { background: var(--accent-dim); color: var(--accent); }
+.li-ic { font-size: 13px; flex-shrink: 0; }
+.slug { font-size: 10px; color: var(--text3); font-family: var(--code); margin-top: 1px; }
+.tag { font-size: 10px; padding: 1px 5px; border-radius: 4px; font-weight: 600; line-height: 1.4; }
+.tag-draft { background: var(--warn-d); color: var(--warn); }
+.tag-ok { background: var(--ok-d); color: var(--ok); }
+.tag-blue { background: var(--blue-d); color: var(--blue); }
+
+.sw { position: relative; margin-bottom: 8px; }
+.s-ic { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 12px; pointer-events: none; }
+.s-inp { padding-left: 26px !important; }
+
+.main-hdr { padding: 14px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; flex-shrink: 0; background: var(--surface); }
+.tabs { display: flex; gap: 2px; padding: 14px 22px 0; border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; background: var(--surface); }
+.tab { display: flex; align-items: center; gap: 5px; padding: 7px 13px; border-radius: var(--r1) var(--r1) 0 0; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text2); border: 1px solid transparent; border-bottom: none; white-space: nowrap; transition: all .15s; }
+.tab:hover { color: var(--text1); background: var(--card); }
+.tab.act { color: var(--accent); background: var(--bg); border-color: var(--border); border-bottom-color: var(--bg); margin-bottom: -1px; }
+
+.mscr { flex: 1; overflow-y: auto; padding: 20px 22px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r2); padding: 15px; margin-bottom: 14px; }
+.ctitle { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text2); margin-bottom: 10px; }
+
+.sch-ed { width: 100%; min-height: 260px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r1); color: #7ee8d6; padding: 13px; font-family: var(--code); font-size: 11px; line-height: 1.8; resize: vertical; outline: none; transition: border-color .15s; }
+.sch-ed:focus { border-color: var(--accent); }
+
+.vrow { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.vrow:last-child { border-bottom: none; }
+.vic { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+
+.steps { display: flex; align-items: center; gap: 0; }
+.stp { display: flex; align-items: center; }
+.sn { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; border: 1px solid var(--border); background: var(--surface); color: var(--text3); }
+.sn.act { background: var(--accent); color: #0D1117; border-color: var(--accent); }
+.sn.dn { background: var(--ok-d); color: var(--ok); border-color: var(--ok); }
+.sl { font-size: 11px; color: var(--text3); margin-left: 5px; }
+.sl.act { color: var(--text1); }
+.sc { width: 20px; height: 1px; background: var(--border); margin: 0 3px; }
+
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r2); padding: 10px 14px; display: flex; align-items: center; gap: 9px; font-size: 12px; z-index: 1000; animation: su .2s ease; min-width: 220px; }
+@keyframes su { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; text-align: center; flex: 1; }
+.e-ic { font-size: 36px; margin-bottom: 14px; opacity: .4; }
+.e-t { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.e-d { font-size: 13px; color: var(--text2); max-width: 320px; line-height: 1.6; }
+
+.spin { width: 13px; height: 13px; border: 2px solid transparent; border-top-color: currentColor; border-radius: 50%; animation: sp .6s linear infinite; flex-shrink: 0; }
+@keyframes sp { to { transform: rotate(360deg); } }
+
+.info { background: var(--blue-d); border: 1px solid rgba(88,166,255,.35); border-radius: var(--r1); padding: 9px 11px; font-size: 11px; color: var(--blue); line-height: 1.6; }
+.row { display: flex; align-items: center; gap: 8px; }
+.rb { display: flex; align-items: center; justify-content: space-between; }
+.f1 { flex: 1; }
+.mt8 { margin-top: 8px; }
+.mt12 { margin-top: 12px; }
+.sdesc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r1); padding: 9px 13px; margin-bottom: 14px; font-size: 12px; color: var(--text2); line-height: 1.6; }
+code { font-family: var(--code); font-size: 10px; background: var(--bg); padding: 1px 5px; border-radius: 4px; color: var(--accent); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const ST = [
+  { id:"faq",   label:"FAQ",          em:"❓", desc:"Q&A pairs shown directly in Google search results" },
+  { id:"art",   label:"Article",      em:"📄", desc:"News, blog posts, and editorial content markup" },
+  { id:"how",   label:"How-To",       em:"🛠",  desc:"Step-by-step guides with numbered instructions" },
+  { id:"bc",    label:"Breadcrumb",   em:"🔗", desc:"Page hierarchy shown in Google search snippets" },
+  { id:"org",   label:"Organization", em:"🏢", desc:"Business name, address, contact & social profiles" },
+  { id:"prod",  label:"Product",      em:"🛍", desc:"Product details with price, rating & availability" },
+];
+
+const DSITES = [
+  { id:"ds1", displayName:"AppsRow Agency Website", shortName:"appsrow" },
+  { id:"ds2", displayName:"Client SaaS Platform",   shortName:"saas-demo" },
+];
+
+const DPAGES = {
+  ds1:[
+    { id:"p01", title:"Home",                slug:"/",                        draft:false },
+    { id:"p02", title:"About Us",            slug:"/about",                   draft:false },
+    { id:"p03", title:"Services",            slug:"/services",                draft:false },
+    { id:"p04", title:"Webflow Development", slug:"/services/webflow-dev",    draft:false },
+    { id:"p05", title:"UI/UX Design",        slug:"/services/ui-ux-design",   draft:false },
+    { id:"p06", title:"Brand Identity",      slug:"/services/brand-identity", draft:false },
+    { id:"p07", title:"Blog",                slug:"/blog",                    draft:false },
+    { id:"p08", title:"FAQ",                 slug:"/faq",                     draft:false },
+    { id:"p09", title:"Contact",             slug:"/contact",                 draft:false },
+    { id:"p10", title:"Case Studies",        slug:"/case-studies",            draft:true  },
+    { id:"p11", title:"Pricing",             slug:"/pricing",                 draft:false },
+  ],
+  ds2:[
+    { id:"q01", title:"Landing Page", slug:"/",         draft:false },
+    { id:"q02", title:"Features",     slug:"/features", draft:false },
+    { id:"q03", title:"Pricing",      slug:"/pricing",  draft:false },
+    { id:"q04", title:"Docs",         slug:"/docs",     draft:false },
+  ],
+};
+
+const TMPL = {
+  faq:  (t)=>JSON.stringify({"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":`What is ${t}?`,"acceptedAnswer":{"@type":"Answer","text":"Click Generate with AI to populate real answers based on your page content."}},{"@type":"Question","name":`How does ${t} work?`,"acceptedAnswer":{"@type":"Answer","text":"Use the AI generator above to auto-create relevant Q&A pairs for this page."}}]},null,2),
+  art:  (t)=>JSON.stringify({"@context":"https://schema.org","@type":"Article","headline":t,"datePublished":new Date().toISOString().split("T")[0],"dateModified":new Date().toISOString().split("T")[0],"description":"Page description here"},null,2),
+  how:  (t)=>JSON.stringify({"@context":"https://schema.org","@type":"HowTo","name":t,"description":"Overview of this guide","step":[{"@type":"HowToStep","position":1,"name":"Step One","text":"Description of first step"},{"@type":"HowToStep","position":2,"name":"Step Two","text":"Description of second step"},{"@type":"HowToStep","position":3,"name":"Step Three","text":"Description of third step"}]},null,2),
+  bc:   (t,s)=>JSON.stringify({"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://example.com"},{"@type":"ListItem","position":2,"name":t,"item":`https://example.com${s&&String(s).startsWith("/")?s:`/${s||""}`}`}]},null,2),
+  org:  ()=>JSON.stringify({"@context":"https://schema.org","@type":"Organization","name":"Company","url":"https://example.com"},null,2),
+  prod: (t)=>JSON.stringify({"@context":"https://schema.org","@type":"Product","name":t,"description":"Product description here","offers":{"@type":"Offer","priceCurrency":"USD","price":"0","availability":"https://schema.org/InStock","seller":{"@type":"Organization","name":"AppsRow"}}},null,2),
+};
+
+function validate(str, type) {
+  const r = [];
+  let p;
+  try { p = JSON.parse(str); r.push({ok:true,msg:"Valid JSON syntax"}); }
+  catch(e){ return [{ok:false,msg:"JSON error: "+e.message}]; }
+  r.push({ok:!!p["@context"],msg:'@context is present'});
+
+  const nodes = Array.isArray(p["@graph"]) ? p["@graph"] : [p];
+  const types = nodes.map(n=>n?.["@type"]).filter(Boolean);
+  r.push({ok:types.length>0,msg:'@type is defined'});
+
+  const firstByType = (typeName) => nodes.find(n => {
+    const t = n?.["@type"];
+    return Array.isArray(t) ? t.includes(typeName) : t === typeName;
+  });
+
+  if(type==="faq"){
+    const node = firstByType("FAQPage") || nodes[0] || {};
+    const e=node.mainEntity;
+    r.push({ok:Array.isArray(e)&&e.length>0,msg:"mainEntity has Q&A items"});
+    if(Array.isArray(e)) r.push({ok:e.every(x=>x.name&&x.acceptedAnswer?.text),msg:"All questions have answers"});
+  }
+  if(type==="art"){
+    const node = firstByType("Article") || nodes[0] || {};
+    r.push({ok:!!node.headline,msg:"headline present"});
+    r.push({ok:!!node.author,msg:"author defined"});
+    r.push({ok:!!node.datePublished,msg:"datePublished set"});
+  }
+  if(type==="how"){
+    const node = firstByType("HowTo") || nodes[0] || {};
+    r.push({ok:Array.isArray(node.step)&&node.step.length>0,msg:"step array present with items"});
+  }
+  if(type==="bc"){
+    const node = firstByType("BreadcrumbList") || nodes[0] || {};
+    r.push({ok:Array.isArray(node.itemListElement),msg:"itemListElement array present"});
+  }
+  if(type==="org"){
+    const node = firstByType("Organization") || nodes[0] || {};
+    r.push({ok:!!node.name,msg:"Organization name set"});
+    r.push({ok:!!node.url,msg:"URL defined"});
+  }
+  if(type==="prod"){
+    const node = firstByType("Product") || nodes[0] || {};
+    r.push({ok:!!node.name,msg:"Product name present"});
+    r.push({ok:!!node.offers,msg:"Offers/pricing defined"});
+  }
+  return r;
+}
+
+function extractJsonLdFromAny(value) {
+  if (!value) return "";
+  if (typeof value === "object") {
+    try { return JSON.stringify(value); } catch { return ""; }
+  }
+  const s = String(value);
+  const m = s.match(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/i);
+  return (m ? m[1] : s).trim();
+}
+
+function parseSchemaSummary(pageMeta) {
+  const raw = extractJsonLdFromAny(
+    pageMeta?.schemaMarkup ||
+    pageMeta?.headCode ||
+    pageMeta?.customCode?.headCode ||
+    ""
+  );
+  if (!raw) return { has:false, type:"", title:"" };
+  try {
+    const j = JSON.parse(raw);
+    const type = Array.isArray(j["@type"]) ? j["@type"].join(", ") : (j["@type"] || "Schema");
+    const title = j.headline || j.name || j.alternateName || j.mainEntity?.[0]?.name || "";
+    return { has:true, type:String(type), title:String(title) };
+  } catch {
+    return { has:true, type:"JSON-LD", title:"Unparsed schema" };
+  }
+}
+
+function mapSchemaTypeToId(type) {
+  const t = String(type || "").toLowerCase();
+  if (t.includes("faqpage")) return "faq";
+  if (t.includes("article")) return "art";
+  if (t.includes("howto")) return "how";
+  if (t.includes("breadcrumblist")) return "bc";
+  if (t.includes("organization") || t.includes("website")) return "org";
+  if (t.includes("product") || t.includes("offer") || t.includes("review")) return "prod";
+  return null;
+}
+
+function inferSchemaTypeFromPage(p) {
+  const t = `${p?.title || ""} ${p?.slug || ""}`.toLowerCase();
+  if (/(faq|q&a|question)/.test(t)) return { type:"faq", why:"FAQ keywords detected" };
+  if (/(how-to|guide|tutorial|steps|process)/.test(t)) return { type:"how", why:"How-to keywords detected" };
+  if (/(product|pricing|plan|buy|shop|service)/.test(t)) return { type:"prod", why:"Commercial keywords detected" };
+  if (/(blog|article|news|insight|post)/.test(t)) return { type:"art", why:"Editorial keywords detected" };
+  if (p?.slug === "/" || /home/.test(t)) return { type:"org", why:"Homepage/brand page detected" };
+  return { type:"bc", why:"Fallback to navigation schema" };
+}
+
+function buildSchemaForSelection(primaryType, title, slug, extraTypes=[]) {
+  const ids = [primaryType, ...extraTypes.filter(Boolean)].filter((x,i,a)=>a.indexOf(x)===i);
+  const objs = ids.map((id)=>{
+    const fn = TMPL[id];
+    if (!fn) return null;
+    try { return JSON.parse(fn(title, slug)); } catch { return null; }
+  }).filter(Boolean);
+  if (objs.length === 0) return "{}";
+  if (objs.length === 1) return JSON.stringify(objs[0], null, 2);
+  return JSON.stringify({ "@context":"https://schema.org", "@graph": objs }, null, 2);
+}
+
+function mergePrimaryWithExtras(primaryJson, title, slug, extraTypes=[]) {
+  let primaryObj = null;
+  try { primaryObj = JSON.parse(primaryJson); } catch { return primaryJson; }
+  if (!extraTypes.length) return JSON.stringify(primaryObj, null, 2);
+  const extraObjs = extraTypes.map((id)=>{
+    const fn = TMPL[id];
+    if (!fn) return null;
+    try { return JSON.parse(fn(title, slug)); } catch { return null; }
+  }).filter(Boolean);
+  if (!extraObjs.length) return JSON.stringify(primaryObj, null, 2);
+  return JSON.stringify({ "@context":"https://schema.org", "@graph":[primaryObj, ...extraObjs] }, null, 2);
+}
+
+function getSiteBaseUrl(site) {
+  const fromFields = site?.url || site?.previewUrl || site?.customDomain || site?.domain;
+  const fromDomains = Array.isArray(site?.customDomains) && site.customDomains.length ? (site.customDomains[0]?.url || site.customDomains[0]) : "";
+  const raw = String(fromFields || fromDomains || "").trim();
+  if (!raw) return "";
+  const withProto = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  return withProto.replace(/\/+$/,"");
+}
+
+function buildCanonicalUrl(site, slug) {
+  const base = getSiteBaseUrl(site) || "https://example.com";
+  const cleanSlug = String(slug || "/").startsWith("/") ? String(slug || "/") : `/${String(slug || "")}`;
+  return cleanSlug === "/" ? base : `${base}${cleanSlug}`;
+}
+
+function normalizeSchemaJson(rawJson, site, slug, pageTitle) {
+  let parsed;
+  try { parsed = typeof rawJson === "string" ? JSON.parse(rawJson) : rawJson; } catch { return rawJson; }
+  const base = getSiteBaseUrl(site) || "https://example.com";
+  const canonical = buildCanonicalUrl(site, slug);
+  const replaceUrlString = (s) => {
+    let out = String(s || "");
+    out = out.replace(/https?:\/\/yourwebsite\.com/gi, base);
+    out = out.replace(/https?:\/\/example\.com/gi, base);
+    out = out.replace(/https?:\/\/appsrow\.com/gi, base);
+    if (out === `${base}${String(slug || "").replace(/^\//,"")}`) out = canonical;
+    if (out.startsWith("/") && !out.startsWith("//")) out = `${base}${out}`;
+    return out;
+  };
+  const walk = (node) => {
+    if (Array.isArray(node)) return node.map(walk);
+    if (!node || typeof node !== "object") return typeof node === "string" ? replaceUrlString(node) : node;
+    const obj = { ...node };
+    for (const k of Object.keys(obj)) obj[k] = walk(obj[k]);
+    return obj;
+  };
+  const flattenGraph = (obj) => {
+    if (!obj || typeof obj !== "object") return [];
+    if (Array.isArray(obj)) return obj.flatMap(flattenGraph);
+    if (Array.isArray(obj["@graph"])) {
+      const self = { ...obj };
+      delete self["@graph"];
+      delete self["@context"];
+      const own = Object.keys(self).length ? [self] : [];
+      return [...own, ...obj["@graph"].flatMap(flattenGraph)];
+    }
+    const clean = { ...obj };
+    delete clean["@context"];
+    return [clean];
+  };
+  const walked = walk(parsed);
+  const nodes = Array.isArray(walked?.["@graph"]) ? walked["@graph"].flatMap(flattenGraph) : flattenGraph(walked);
+  const fixedNodes = nodes.map(n=>{
+    const x = { ...n };
+    if (!x.url) x.url = canonical;
+    if (!x.name && x["@type"]==="WebPage") x.name = pageTitle || "Page";
+    return x;
+  });
+  return JSON.stringify({ "@context":"https://schema.org", "@graph": fixedNodes }, null, 2);
+}
+
+function getWebflowBase(proxy) {
+  if (proxy && String(proxy).trim()) return String(proxy).trim().replace(/\/$/, "");
+  if (typeof window !== "undefined" && window.location.protocol === "http:" && window.location.hostname === "localhost")
+    return "/api/webflow";
+  return "https://api.webflow.com/v2";
+}
+
+function useLocalApi() {
+  return typeof window !== "undefined" && window.location.protocol === "http:" && window.location.hostname === "localhost";
+}
+
+async function callWebflow(path, key, proxy) {
+  const base = getWebflowBase(proxy);
+  const r = await fetch(`${base}${path}`, { headers:{"Authorization":`Bearer ${key}`,"Accept-Version":"2.0.0"} });
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.message || j.err || j.error || `Webflow ${r.status}: ${r.statusText}`);
+  return j;
+}
+
+async function injectSchema(pageId, schema, key, proxy, target="schemaField") {
+  const base = getWebflowBase(proxy);
+  const scriptTag = `<script type="application/ld+json">\n${schema}\n<\/script>`;
+  const headers = {"Authorization":`Bearer ${key}`,"Content-Type":"application/json","Accept-Version":"2.0.0"};
+  const attemptsByTarget = {
+    schemaField: [
+      { name: "schemaMarkup", url: `${base}/pages/${pageId}`, method: "PUT", body: { schemaMarkup: schema } },
+      { name: "headCode", url: `${base}/pages/${pageId}`, method: "PUT", body: { headCode: scriptTag } },
+      { name: "customCodeHead", url: `${base}/pages/${pageId}`, method: "PUT", body: { customCode: { headCode: scriptTag } } },
+      { name: "legacyHead", url: `${base}/pages/${pageId}/custom-code`, method: "PUT", body: { headCode: scriptTag } },
+    ],
+    headCode: [
+      { name: "headCode", url: `${base}/pages/${pageId}`, method: "PUT", body: { headCode: scriptTag } },
+      { name: "customCodeHead", url: `${base}/pages/${pageId}`, method: "PUT", body: { customCode: { headCode: scriptTag } } },
+      { name: "legacyHead", url: `${base}/pages/${pageId}/custom-code`, method: "PUT", body: { headCode: scriptTag } },
+    ],
+    bodyCode: [
+      { name: "customCodeBody", url: `${base}/pages/${pageId}`, method: "PUT", body: { customCode: { bodyCode: scriptTag } } },
+      { name: "legacyBody", url: `${base}/pages/${pageId}/custom-code`, method: "PUT", body: { bodyCode: scriptTag } },
+      { name: "bodyCodeRoot", url: `${base}/pages/${pageId}`, method: "PUT", body: { bodyCode: scriptTag } },
+    ],
+  };
+  const attempts = attemptsByTarget[target] || attemptsByTarget.schemaField;
+  let lastErr = "Unknown error";
+  for (const a of attempts) {
+    const r = await fetch(a.url, { method: a.method, headers, body: JSON.stringify(a.body) });
+    const j = await r.json().catch(()=>({}));
+    if (r.ok) return { ok:true, via:a.name };
+    lastErr = j.message || j.err || j.error || j.code || `Webflow ${r.status}: ${r.statusText}`;
+  }
+  throw new Error(lastErr);
+}
+
+async function publishSite(siteId, key, proxy) {
+  const base = getWebflowBase(proxy);
+  const r = await fetch(`${base}/sites/${siteId}/publish`, {
+    method:"POST",
+    headers:{"Authorization":`Bearer ${key}`,"Content-Type":"application/json","Accept-Version":"2.0.0"},
+    body: JSON.stringify({ publishToWebflowSubdomain: true }),
+  });
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.message || j.err || j.error || j.code || `Publish ${r.status}: ${r.statusText}`);
+  return true;
+}
+
+async function injectSchemaToCmsItem(collectionId, itemId, fieldData, schemaFieldKey, schema, key, proxy) {
+  const base = getWebflowBase(proxy);
+  const body = {
+    items: [{
+      id: itemId,
+      fieldData: {
+        ...(fieldData || {}),
+        [schemaFieldKey]: schema,
+      }
+    }]
+  };
+  const r = await fetch(`${base}/collections/${collectionId}/items`, {
+    method: "PATCH",
+    headers: {"Authorization":`Bearer ${key}`,"Content-Type":"application/json","Accept-Version":"2.0.0"},
+    body: JSON.stringify(body),
+  });
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.message || j.err || j.error || j.code || `Webflow ${r.status}: ${r.statusText}`);
+  return true;
+}
+
+async function getCollection(collectionId, key, proxy) {
+  return callWebflow(`/collections/${collectionId}`, key, proxy);
+}
+
+async function createSchemaField(collectionId, displayName, key, proxy) {
+  const base = getWebflowBase(proxy);
+  const payload = {
+    type: "PlainText",
+    displayName: displayName || "Schema JSON-LD",
+    helpText: "SchemaFlow generated JSON-LD",
+    isRequired: false,
+  };
+  const headers = {"Authorization":`Bearer ${key}`,"Content-Type":"application/json","Accept-Version":"2.0.0"};
+  const attempts = [
+    `${base}/collections/${collectionId}/fields`,
+    `${base}/collections/${collectionId}/fields/static`,
+  ];
+  let lastErr = "Unknown field create error";
+  for (const url of attempts) {
+    const r = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
+    const j = await r.json().catch(()=>({}));
+    if (r.ok) return j;
+    lastErr = j.message || j.err || j.error || j.code || `Create field ${r.status}: ${r.statusText}`;
+  }
+  throw new Error(lastErr);
+}
+
+/** OpenAI schema generation via local Node server (OPENAI_API_KEY in .env) */
+async function aiGenerateServer(type, title, slug, ctx, canonicalUrl, siteBaseUrl) {
+  const r = await fetch("/api/ai/generate", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ type, title, slug, context: ctx || "", cmsContext: "", canonicalUrl, siteBaseUrl }),
+  });
+  const d = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(d.error || `AI ${r.status}`);
+  return d.text || "{}";
+}
+
+async function aiGenerateBundleServer(title, slug, ctx, extraTypes=[], canonicalUrl="", siteBaseUrl="") {
+  const r = await fetch("/api/ai/generate", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      mode: "bundle",
+      title,
+      slug,
+      context: ctx || "",
+      selectedExtraTypes: extraTypes || [],
+      cmsContext: "",
+      canonicalUrl,
+      siteBaseUrl,
+    }),
+  });
+  const d = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(d.error || `AI ${r.status}`);
+  return d.bundle || null;
+}
+
+function Toast({t, onClose}) {
+  useEffect(()=>{ if(!t) return; const x=setTimeout(onClose,3800); return()=>clearTimeout(x); },[t]);
+  if(!t) return null;
+  const col={success:"#3FB950",error:"#F85149",info:"#58A6FF",warning:"#D29922"};
+  return <div className="toast"><div className="bdot" style={{background:col[t.type]||col.info}}/><span style={{color:"var(--text1)"}}>{t.msg}</span></div>;
+}
+
+function Steps({step}) {
+  const ss=["Connect","Select Page","Schema","Inject"];
+  return <div className="steps">{ss.map((s,i)=><div key={i} className="stp">{i>0&&<div className="sc" style={{background:i<step?"var(--accent)":"var(--border)"}}/>}<div className={`sn ${i+1===step?"act":i+1<step?"dn":""}`}>{i+1<step?"✓":i+1}</div><span className={`sl ${i+1===step?"act":""}`}>{s}</span></div>)}</div>;
+}
+
+function App() {
+  const [wKey,setWKey]=useState("");
+  const [proxy,setProxy]=useState("");
+  const [showProxy,setShowProxy]=useState(false);
+  const [aiReady,setAiReady]=useState(false);
+  const [conn,setConn]=useState("off"); // off|ing|on|dm
+  const [sites,setSites]=useState([]);
+  const [site,setSite]=useState(null);
+  const [pages,setPages]=useState([]);
+  const [page,setPage]=useState(null);
+  const [mode,setMode]=useState("static"); // static | cms
+  const [injectTarget,setInjectTarget]=useState("schemaField"); // schemaField | headCode | bodyCode
+  const [collections,setCollections]=useState([]);
+  const [collectionId,setCollectionId]=useState("");
+  const [items,setItems]=useState([]);
+  const [itemId,setItemId]=useState("");
+  const [selectedItemIds,setSelectedItemIds]=useState([]);
+  const [itemFieldData,setItemFieldData]=useState({});
+  const [schemaFieldKey,setSchemaFieldKey]=useState("schema-jsonld");
+  const [isFieldBusy,setIsFieldBusy]=useState(false);
+  const [cmsSchemaInfo,setCmsSchemaInfo]=useState({ has:false, type:"", title:"" });
+  const [psearch,setPsearch]=useState("");
+  const [stype,setStype]=useState("faq");
+  const [extraTypes,setExtraTypes]=useState([]);
+  const [recommended,setRecommended]=useState({ type:"faq", why:"" });
+  const [detectedPageType,setDetectedPageType]=useState("generic webpage");
+  const [ctx,setCtx]=useState("");
+  const [schema,setSchema]=useState("");
+  const [isGen,setIsGen]=useState(false);
+  const [isInj,setIsInj]=useState(false);
+  const [isPub,setIsPub]=useState(false);
+  const [isBot,setIsBot]=useState(false);
+  const [isBulk,setIsBulk]=useState(false);
+  const [autoPublish,setAutoPublish]=useState(true);
+  const [settingsUrl,setSettingsUrl]=useState("");
+  const [isLP,setIsLP]=useState(false);
+  const [isAna,setIsAna]=useState(false);
+  const [valid,setValid]=useState(null);
+  const [injd,setInjd]=useState(new Set());
+  const [schemaMap,setSchemaMap]=useState({});
+  const [draftsByPage,setDraftsByPage]=useState({});
+  const [toast,setToast]=useState(null);
+
+  useEffect(()=>{
+    fetch("/api/health").then(r=>r.json()).then(d=>setAiReady(!!d.openai)).catch(()=>setAiReady(false));
+    try {
+      const savedKey = localStorage.getItem("sf_wf_key") || "";
+      const savedProxy = localStorage.getItem("sf_proxy") || "";
+      const savedDrafts = JSON.parse(localStorage.getItem("sf_drafts_by_page") || "{}");
+      if (savedKey) setWKey(savedKey);
+      if (savedProxy) setProxy(savedProxy);
+      if (savedDrafts && typeof savedDrafts === "object") setDraftsByPage(savedDrafts);
+    } catch {}
+  },[]);
+
+  useEffect(()=>{ try { localStorage.setItem("sf_wf_key", wKey || ""); } catch {} }, [wKey]);
+  useEffect(()=>{ try { localStorage.setItem("sf_proxy", proxy || ""); } catch {} }, [proxy]);
+  useEffect(()=>{ try { localStorage.setItem("sf_drafts_by_page", JSON.stringify(draftsByPage || {})); } catch {} }, [draftsByPage]);
+  useEffect(()=>{
+    try {
+      const u = localStorage.getItem("sf_settings_url") || "";
+      if (u) setSettingsUrl(u);
+    } catch {}
+  },[]);
+  useEffect(()=>{ try { localStorage.setItem("sf_settings_url", settingsUrl || ""); } catch {} }, [settingsUrl]);
+
+  const tk = (msg,type="info") => setToast({msg,type});
+  const selectedCmsItem = items.find(x=>x.id===itemId) || items.find(x=>x.id===selectedItemIds[0]) || null;
+  const targetTitle = mode==="cms"
+    ? (itemFieldData?.name || itemFieldData?.title || selectedCmsItem?.fieldData?.name || selectedCmsItem?.fieldData?.title || "CMS Item")
+    : (page?.title || "");
+  const targetSlug = mode==="cms"
+    ? (`/${(itemFieldData?.slug || selectedCmsItem?.fieldData?.slug || "").replace(/^\/+/,"")}` || "/")
+    : (page?.slug || "/");
+  const canWork = mode==="cms" ? (!!collectionId && (!!itemId || selectedItemIds.length>0)) : !!page;
+  const step = conn==="off"?1:!canWork?2:!schema?3:4;
+  const extraOptions = ST.filter(t=>t.id!==stype);
+
+  const refreshTemplateSchema = (nextType=stype, nextExtra=extraTypes)=>{
+    if(!canWork) return;
+    setSchema(buildSchemaForSelection(nextType, targetTitle, targetSlug, nextExtra));
+  };
+
+  const analyzePages = async (list)=>{
+    if(conn==="dm"){ return; }
+    if(!wKey.trim() || !Array.isArray(list) || list.length===0){ return; }
+    setIsAna(true);
+    const results = await Promise.allSettled(
+      list.map(async (p)=>{
+        const meta = await callWebflow(`/pages/${p.id}`, wKey, proxy);
+        return [p.id, parseSchemaSummary(meta)];
+      })
+    );
+    const next = {};
+    for (const r of results) {
+      if (r.status === "fulfilled") {
+        const [id, info] = r.value;
+        next[id] = info;
+      }
+    }
+    setSchemaMap(next);
+    const found = Object.values(next).filter(x=>x.has).length;
+    tk(`Schema analytics complete: ${found}/${list.length} pages have schema`,"info");
+    setIsAna(false);
+  };
+
+  const loadCollectionItems = async (colId) => {
+    setCollectionId(colId);
+    setItems([]);
+    setItemId("");
+    setSelectedItemIds([]);
+    setItemFieldData({});
+    if(!colId || conn==="dm") return;
+    try{
+      const d = await callWebflow(`/collections/${colId}/items`, wKey, proxy);
+      setItems(d.items || []);
+    } catch(e){
+      tk(`CMS items load failed: ${e.message}`,"error");
+    }
+  };
+
+  const toggleSelectedItem = (id)=>{
+    setSelectedItemIds(prev => prev.includes(id) ? prev.filter(x=>x!==id) : [...prev, id]);
+  };
+  const selectAllItems = ()=>{
+    setSelectedItemIds(items.map(x=>x.id));
+  };
+  const clearSelectedItems = ()=>{
+    setSelectedItemIds([]);
+  };
+  const getCmsItemTitleSlug = (it)=>{
+    const fd = it?.fieldData || {};
+    const t = fd.name || fd.title || "CMS Item";
+    const sRaw = String(fd.slug || "").trim();
+    const s = sRaw ? `/${sRaw.replace(/^\/+/,"")}` : "/";
+    return { title:t, slug:s };
+  };
+
+  const loadExistingCmsSchema = (item, keyName) => {
+    const fd = item?.fieldData || {};
+    const key = (keyName || "").trim();
+    if (!key) return;
+    const raw = fd[key] || "";
+    if (!raw) {
+      setCmsSchemaInfo({ has:false, type:"", title:"" });
+      tk(`No existing schema in field "${key}" for selected item`,"info");
+      return;
+    }
+    const info = parseSchemaSummary({ schemaMarkup: raw });
+    setCmsSchemaInfo(info);
+    setSchema(raw);
+    setValid(null);
+    const mapped = mapSchemaTypeToId(info.type);
+    if (mapped) setStype(mapped);
+    tk(`Loaded existing CMS schema (${info.type || "JSON-LD"})`,"success");
+  };
+
+  const ensureSchemaField = async()=>{
+    if(!collectionId){ tk("Select CMS collection first","error"); return; }
+    if(!wKey.trim()){ tk("Webflow API key required","error"); return; }
+    const keyName = (schemaFieldKey || "").trim().toLowerCase();
+    if(!keyName){ tk("Enter schema field key first","error"); return; }
+    setIsFieldBusy(true);
+    try{
+      const c = await getCollection(collectionId, wKey, proxy);
+      const fields = c?.fields || [];
+      const exists = fields.find(f=>{
+        const k = String(f.slug || f.apiSlug || f.key || "").toLowerCase();
+        return k === keyName;
+      });
+      if(exists){
+        tk(`Field already exists: ${keyName}`,"success");
+      } else {
+        await createSchemaField(collectionId, keyName.replace(/-/g," "), wKey, proxy);
+        tk(`Schema field created. If key differs, copy exact field slug in Webflow and paste here.`,`warning`);
+      }
+    } catch(e){
+      tk(`Field create/check failed: ${e.message}`,"error");
+    }
+    setIsFieldBusy(false);
+  };
+
+  const doConnect = async()=>{
+    if(!wKey.trim()){tk("Enter your Webflow API key","error");return;}
+    setConn("ing");
+    try {
+      const d = await callWebflow("/sites",wKey,proxy);
+      setSites(d.sites||[]);
+      setConn("on");
+      tk(`Connected! Found ${(d.sites||[]).length} site(s)`,"success");
+    } catch(e){
+      setConn("off");
+      const msg = e.message.includes("Failed to fetch")||e.message.includes("CORS")
+        ? "CORS blocked — run npm start and open http://localhost:3000, set a Proxy URL, or use Demo Mode" : e.message;
+      tk(msg,"error");
+    }
+  };
+
+  const doDemo=()=>{ setSites(DSITES); setConn("dm"); tk("Demo mode – using sample Webflow data","info"); };
+
+  const doPickSite=async(s)=>{
+    setSite(s); setPage(null); setSchema(""); setValid(null); setIsLP(true);
+    setCollections([]); setCollectionId(""); setItems([]); setItemId(""); setItemFieldData({});
+    try {
+      if(conn==="dm"){
+        await new Promise(r=>setTimeout(r,500));
+        const lp = DPAGES[s.id]||[];
+        setPages(lp);
+      } else {
+        const d = await callWebflow(`/sites/${s.id}/pages`,wKey,proxy);
+        const lp = (d.pages||[]).map(p=>({id:p.id,title:p.title,slug:p.slug,draft:p.draft}));
+        setPages(lp);
+        analyzePages(lp);
+        try{
+          const c = await callWebflow(`/sites/${s.id}/collections`,wKey,proxy);
+          setCollections(c.collections || []);
+        } catch {
+          setCollections([]);
+        }
+      }
+    } catch(e){ tk(e.message,"error"); }
+    setIsLP(false);
+  };
+
+  const doPickPage=async(p)=>{
+    const saved = draftsByPage[p.id];
+    const rec = saved?.recommended || inferSchemaTypeFromPage(p);
+    const nextType = saved?.stype || rec.type;
+    const nextExtra = Array.isArray(saved?.extraTypes) ? saved.extraTypes : [];
+    const nextCtx = typeof saved?.ctx === "string" ? saved.ctx : "";
+    const nextSchema = saved?.schema || buildSchemaForSelection(nextType, p.title, p.slug, nextExtra);
+    setPage(p);
+    setValid(null);
+    setRecommended(rec);
+    setDetectedPageType("generic webpage");
+    setStype(nextType);
+    setExtraTypes(nextExtra);
+    setCtx(nextCtx);
+    setSchema(nextSchema);
+    tk(`Selected: ${p.title}`,"info");
+    // If no local draft, try loading existing schema already saved on Webflow page.
+    if(!saved && conn==="on"){
+      try{
+        const meta = await callWebflow(`/pages/${p.id}`, wKey, proxy);
+        const raw = extractJsonLdFromAny(meta?.schemaMarkup || meta?.headCode || meta?.customCode?.headCode || "");
+        if(raw){
+          const info = parseSchemaSummary({ schemaMarkup: raw });
+          setSchema(raw);
+          setSchemaMap(prev=>({ ...prev, [p.id]: info }));
+          const mapped = mapSchemaTypeToId(info.type);
+          if(mapped) setStype(mapped);
+          tk(`Loaded existing page schema (${info.type || "JSON-LD"})`,"success");
+        }
+      } catch {}
+    }
+  };
+
+  const doType=(t)=>{
+    const nextExtra = extraTypes.filter(x=>x!==t);
+    setStype(t);
+    setExtraTypes(nextExtra);
+    setValid(null);
+    refreshTemplateSchema(t, nextExtra);
+  };
+
+  const toggleExtraType=(id)=>{
+    if(id===stype) return;
+    const next = extraTypes.includes(id) ? extraTypes.filter(x=>x!==id) : [...extraTypes, id];
+    setExtraTypes(next);
+    setValid(null);
+    refreshTemplateSchema(stype, next);
+  };
+
+  const doGenerate=async()=>{
+    if(!canWork){ tk(mode==="cms" ? "Select CMS collection and item first" : "Select a page first","error"); return; }
+    setIsGen(true);
+    try {
+      let res;
+      if(conn==="dm"){
+        await new Promise(r=>setTimeout(r,800));
+        res = buildSchemaForSelection(stype, targetTitle, targetSlug, extraTypes);
+      } else if(useLocalApi()){
+        try{
+          const autoCtx = ctx.trim()
+            ? ctx
+            : `Auto page context: title="${targetTitle}", slug="${targetSlug}", recommended="${recommended.type}", extra="${extraTypes.join(",") || "none"}", mode="${mode}".`;
+          const canonicalUrl = buildCanonicalUrl(site, targetSlug);
+          const siteBaseUrl = getSiteBaseUrl(site);
+          res = await aiGenerateServer(stype,targetTitle,targetSlug,autoCtx,canonicalUrl,siteBaseUrl);
+        } catch(e){
+          const m = String(e.message||"");
+          if(m.includes("OPENAI")||m.includes("503")){
+            tk("AI not configured on server — using template. Add OPENAI_API_KEY to .env","warning");
+            res = buildSchemaForSelection(stype, targetTitle, targetSlug, extraTypes);
+          } else throw e;
+        }
+      } else {
+        tk("Open http://localhost:3000 (npm start) for OpenAI, or use Demo / templates","warning");
+        res = buildSchemaForSelection(stype, targetTitle, targetSlug, extraTypes);
+      }
+      res = mergePrimaryWithExtras(res, targetTitle, targetSlug, extraTypes);
+      res = normalizeSchemaJson(res, site, targetSlug, targetTitle);
+      try{ res=JSON.stringify(JSON.parse(res),null,2); }catch{}
+      setSchema(res);
+      const v=validate(res,stype); setValid(v);
+      const all=v.every(c=>c.ok);
+      tk(all?"Schema generated & validated ✓":"Schema generated – review warnings below",all?"success":"warning");
+    } catch(e){ tk("Generation failed: "+e.message,"error"); }
+    setIsGen(false);
+  };
+
+  const doGenerateAnalytics=async()=>{
+    if(!canWork){ tk(mode==="cms" ? "Select CMS collection and item first" : "Select a page first","error"); return; }
+    const primary = recommended?.type || stype;
+    const pickedExtra = extraTypes.filter(x=>x!==primary);
+    setStype(primary);
+    setExtraTypes(pickedExtra);
+    setIsGen(true);
+    try {
+      const seoCtx = [
+        `SEO goal: Generate high-quality structured data for better search visibility.`,
+        `Page title: ${targetTitle}`,
+        `Page slug: ${targetSlug}`,
+        `Primary schema type: ${primary}`,
+        `Extra schema types: ${pickedExtra.join(", ") || "none"}`,
+        ctx?.trim() ? `Business/page context: ${ctx.trim()}` : "",
+      ].filter(Boolean).join("\n");
+
+      let res;
+      let bundle = null;
+      if(conn==="dm"){
+        await new Promise(r=>setTimeout(r,700));
+        res = buildSchemaForSelection(primary, targetTitle, targetSlug, pickedExtra);
+      } else if(useLocalApi()){
+        try {
+          const canonicalUrl = buildCanonicalUrl(site, targetSlug);
+          const siteBaseUrl = getSiteBaseUrl(site);
+          bundle = await aiGenerateBundleServer(targetTitle, targetSlug, seoCtx, pickedExtra, canonicalUrl, siteBaseUrl);
+          if (bundle?.ui?.pageType) setDetectedPageType(bundle.ui.pageType);
+          if (Array.isArray(bundle?.ui?.recommendedSchemas)) {
+            const recList = bundle.ui.recommendedSchemas;
+            const firstRequired = recList.find(x=>x?.required && typeof x.type==="string");
+            const firstAny = recList.find(x=>typeof x?.type==="string");
+            const map = { FAQPage:"faq", Article:"art", HowTo:"how", BreadcrumbList:"bc", Organization:"org", Product:"prod", WebSite:"org", WebPage:"bc", Service:"prod", Offer:"prod", Review:"prod" };
+            const mapped = map[(firstRequired?.type || firstAny?.type || "")] || primary;
+            setStype(mapped);
+            const extrasFromUi = recList
+              .map(x=>map[x?.type] || null)
+              .filter(Boolean)
+              .filter(x=>x!==mapped)
+              .filter((x,i,a)=>a.indexOf(x)===i);
+            const mergedExtra = [...pickedExtra, ...extrasFromUi].filter((x,i,a)=>a.indexOf(x)===i).filter(x=>x!==mapped);
+            setExtraTypes(mergedExtra);
+            res = mergePrimaryWithExtras(JSON.stringify(bundle.schema || {}, null, 2), targetTitle, targetSlug, mergedExtra);
+          } else {
+            const canonicalUrl = buildCanonicalUrl(site, targetSlug);
+            const siteBaseUrl = getSiteBaseUrl(site);
+            res = await aiGenerateServer(primary, targetTitle, targetSlug, seoCtx, canonicalUrl, siteBaseUrl);
+          }
+        } catch(e){
+          const m = String(e.message||"");
+          if(m.includes("OPENAI")||m.includes("503")){
+            tk("AI not configured on server — using template. Add OPENAI_API_KEY to .env","warning");
+            res = buildSchemaForSelection(primary, targetTitle, targetSlug, pickedExtra);
+          } else throw e;
+        }
+      } else {
+        tk("Open http://localhost:3000 (npm start) for OpenAI, or use Demo / templates","warning");
+        res = buildSchemaForSelection(primary, targetTitle, targetSlug, pickedExtra);
+      }
+      if(!bundle) res = mergePrimaryWithExtras(res, targetTitle, targetSlug, pickedExtra);
+      res = normalizeSchemaJson(res, site, targetSlug, targetTitle);
+      try{ res=JSON.stringify(JSON.parse(res),null,2); }catch{}
+      setSchema(res);
+      const v=validate(res,primary); setValid(v);
+      tk("Analytics AI schema generated for this page","success");
+    } catch(e){ tk("Generation failed: "+e.message,"error"); }
+    setIsGen(false);
+  };
+
+  const doValidate=()=>{
+    if(!schema.trim()){tk("No schema to validate","error");return;}
+    const v=validate(schema,stype); setValid(v);
+    tk(v.every(c=>c.ok)?"All checks passed!":"Issues found – review below",v.every(c=>c.ok)?"success":"warning");
+  };
+
+  const doFormat=()=>{
+    try{ setSchema(JSON.stringify(JSON.parse(schema),null,2)); tk("Formatted","success"); }
+    catch{ tk("Invalid JSON – cannot format","error"); }
+  };
+
+  const doCopy=()=>{ navigator.clipboard?.writeText(schema); tk("Copied to clipboard","success"); };
+
+  const doInject=async()=>{
+    if(!canWork || !schema.trim()){
+      tk(mode==="cms" ? "Select CMS collection/item and generate schema first" : "Generate a schema first","error");
+      return;
+    }
+    if(conn==="dm"){
+      setIsInj(true);
+      await new Promise(r=>setTimeout(r,800));
+      setInjd(prev=>new Set([...prev,page.id]));
+      tk(`Schema injected to "${page.title}" (Demo)`, "success");
+      setIsInj(false);
+      return;
+    }
+    if(!wKey.trim()){tk("Webflow API key required","error");return;}
+    setIsInj(true);
+    try {
+      if(mode==="cms"){
+        if(!collectionId){ throw new Error("Select CMS collection"); }
+        const bulkIds = selectedItemIds.length ? selectedItemIds : (itemId ? [itemId] : []);
+        if(!bulkIds.length){ throw new Error("Select CMS item(s)"); }
+        const keyName = schemaFieldKey.trim() || "schema-jsonld";
+        if(bulkIds.length > 1){
+          setIsBulk(true);
+          let ok = 0;
+          let fail = 0;
+          for (const id of bulkIds) {
+            const it = items.find(x=>x.id===id);
+            if(!it) { fail++; continue; }
+            try{
+              const { title, slug } = getCmsItemTitleSlug(it);
+              let cmsSchema = schema;
+              // If AI context is available, generate page-wise schema for each selected item.
+              if(useLocalApi()){
+                try{
+                  const autoCtx = ctx.trim()
+                    ? `${ctx.trim()}\n\nItem title: ${title}\nItem slug: ${slug}`
+                    : `Auto CMS context: title="${title}", slug="${slug}", schemaType="${stype}"`;
+                  const canonicalUrl = buildCanonicalUrl(site, slug);
+                  const siteBaseUrl = getSiteBaseUrl(site);
+                  cmsSchema = await aiGenerateServer(stype, title, slug, autoCtx, canonicalUrl, siteBaseUrl);
+                  cmsSchema = mergePrimaryWithExtras(cmsSchema, title, slug, extraTypes);
+                  cmsSchema = normalizeSchemaJson(cmsSchema, site, slug, title);
+                } catch {
+                  cmsSchema = normalizeSchemaJson(mergePrimaryWithExtras(schema, title, slug, extraTypes), site, slug, title);
+                }
+              } else {
+                cmsSchema = normalizeSchemaJson(mergePrimaryWithExtras(schema, title, slug, extraTypes), site, slug, title);
+              }
+              await injectSchemaToCmsItem(collectionId, id, it.fieldData || {}, keyName, cmsSchema, wKey, proxy);
+              ok++;
+            } catch {
+              fail++;
+            }
+          }
+          tk(`Bulk CMS sync complete: ${ok} updated, ${fail} failed` , fail ? "warning" : "success");
+        } else {
+          const singleId = bulkIds[0];
+          const singleItem = items.find(x=>x.id===singleId);
+          await injectSchemaToCmsItem(collectionId, singleId, (singleItem && singleItem.fieldData) || itemFieldData, keyName, schema, wKey, proxy);
+          tk(`Schema saved to CMS item via field "${keyName}"`,"success");
+        }
+      } else {
+        const r = await injectSchema(page.id,schema,wKey,proxy,injectTarget);
+        tk(`Schema synced to "${page.title}" via ${r.via}`,"success");
+      }
+      if(page?.id){
+        setInjd(prev=>new Set([...prev,page.id]));
+        try{
+          const parsed = parseSchemaSummary({ schemaMarkup:schema });
+          setSchemaMap(prev=>({ ...prev, [page.id]: parsed }));
+        } catch {}
+      }
+      if(autoPublish && site?.id){
+        setIsPub(true);
+        await publishSite(site.id, wKey, proxy);
+        tk(`Site published after schema sync: ${site.displayName || site.shortName}`,"success");
+      }
+    } catch(e){
+      const m = String(e.message||"");
+      if(m.includes("validation_error")||m.includes("resource_not_found")||m.includes("Route not found")||m.includes("not found")){
+        await navigator.clipboard?.writeText(schema).catch(()=>{});
+        tk("Direct API write failed for this static page. Schema copied — paste once in Page Settings > Schema markup and Publish.","warning");
+      } else {
+        tk("Inject failed: "+m,"error");
+      }
+    }
+    setIsBulk(false);
+    setIsPub(false);
+    setIsInj(false);
+  };
+
+  const doBotSync = async()=>{
+    if(!schema.trim()){ tk("Generate schema first","error"); return; }
+    if(!settingsUrl.trim()){ tk("Paste Webflow Page Settings URL first","error"); return; }
+    setIsBot(true);
+    try{
+      const r = await fetch("/api/bot/sync", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ settingsUrl: settingsUrl.trim(), schema, target: injectTarget }),
+      });
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(d.error || `Bot ${r.status}`);
+      tk(d.saved ? "Browser bot synced and clicked Save" : "Bot wrote schema; please verify Save state", d.saved ? "success" : "warning");
+    } catch(e){
+      tk("Browser bot failed: "+e.message, "error");
+    }
+    setIsBot(false);
+  };
+
+  const doBotBindField = async()=>{
+    if(!settingsUrl.trim()){ tk("Paste Webflow Template Settings URL first","error"); return; }
+    if(!(schemaFieldKey || "").trim()){ tk("Enter schema field key first","error"); return; }
+    setIsBot(true);
+    try{
+      const r = await fetch("/api/bot/sync", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          settingsUrl: settingsUrl.trim(),
+          schema: schema || "{}",
+          target: "schemaField",
+          bindField: true,
+          fieldName: schemaFieldKey.trim(),
+        }),
+      });
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(d.error || `Bot ${r.status}`);
+      tk("Browser bot bound CMS field in template and saved","success");
+    } catch(e){
+      tk("Bot bind failed: "+e.message, "error");
+    }
+    setIsBot(false);
+  };
+
+  useEffect(()=>{
+    if(!page?.id) return;
+    setDraftsByPage(prev=>({
+      ...prev,
+      [page.id]: {
+        stype,
+        extraTypes,
+        ctx,
+        schema,
+        recommended,
+        updatedAt: Date.now(),
+      }
+    }));
+  }, [page?.id, stype, extraTypes, ctx, schema, recommended]);
+
+  const fp=pages.filter(p=>p.title.toLowerCase().includes(psearch.toLowerCase())||(p.slug||"").toLowerCase().includes(psearch.toLowerCase()));
+  const aST=ST.find(t=>t.id===stype);
+
+  return (
+    <div className="app">
+      {/* Header */}
+      <div className="hdr">
+        <div className="logo">
+          <div className="logo-ic"><img src="schema-flow-logo.svg" alt="SchemaFlow logo" /></div>
+        </div>
+        <div className="row" style={{gap:10}}>
+          <Steps step={step}/>
+          <div style={{width:1,height:18,background:"var(--border)",margin:"0 6px"}}/>
+          {conn==="on"&&<span className="badge b-ok"><span className="bdot" style={{background:"var(--ok)"}}/>Connected</span>}
+          {conn==="dm"&&<span className="badge b-dm"><span className="bdot" style={{background:"var(--blue)"}}/>Demo Mode</span>}
+          {conn==="off"&&<span className="badge b-no"><span className="bdot" style={{background:"var(--err)"}}/>Not Connected</span>}
+          {conn==="ing"&&<span className="badge" style={{background:"var(--warn-d)",color:"var(--warn)",border:"1px solid var(--warn)"}}><div className="spin"/>Connecting</span>}
+        </div>
+      </div>
+
+      <div className="bdy">
+        {/* Sidebar */}
+        <div className="sbar">
+          {/* API Config */}
+          <div className="sec">
+            <div className="sec-lbl">API Configuration</div>
+            <div className="inp-g">
+              <label className="inp-lbl">Webflow API Key</label>
+              <input className="inp inp-c" type="password" placeholder="Bearer token..." value={wKey} onChange={e=>setWKey(e.target.value)} onKeyDown={e=>e.key==="Enter"&&doConnect()}/>
+            </div>
+            <div className="inp-g">
+              <label className="inp-lbl">OpenAI <span style={{color:"var(--text3)"}}>(server — not in browser)</span></label>
+              <div style={{fontSize:11,color:aiReady?"var(--ok)":"var(--warn)",border:"1px solid var(--border)",borderRadius:"var(--r1)",padding:"8px 10px",background:"var(--bg)",lineHeight:1.5}}>
+                {aiReady?"✓ OPENAI_API_KEY on server — AI ready":"⚠ Add OPENAI_API_KEY to .env and run npm start"}
+              </div>
+            </div>
+            <div style={{marginBottom:10}}>
+              <button onClick={()=>setShowProxy(!showProxy)} style={{background:"none",border:"none",cursor:"pointer",padding:0,color:"var(--accent)",fontSize:11,fontFamily:"var(--ui)"}}>
+                {showProxy?"▼":"▶"} Proxy URL <span style={{color:"var(--text3)"}}>(CORS fix)</span>
+              </button>
+              {showProxy&&<input className="inp mt8" style={{marginTop:6}} placeholder="https://your-app.com/api/wf-proxy" value={proxy} onChange={e=>setProxy(e.target.value)}/>}
+            </div>
+            <div className="row" style={{gap:7}}>
+              <button className="btn btn-p f1" onClick={doConnect} disabled={conn==="ing"||!wKey.trim()}>
+                {conn==="ing"?<><div className="spin"/>Connecting</>:"⚡ Connect Webflow"}
+              </button>
+              <button className="btn btn-o" onClick={doDemo} title="Try with demo data" style={{flexShrink:0}}>Demo</button>
+            </div>
+            {conn==="off"&&<div className="info mt8">💡 Webflow blocks direct browser calls. Run <code>npm start</code> and open <code>http://localhost:3000</code>, set a proxy URL, or use <strong>Demo</strong>.</div>}
+          </div>
+
+          {/* Sites */}
+          {(conn==="on"||conn==="dm")&&(
+            <div className="sec" style={{flexShrink:0}}>
+              <div className="sec-lbl">Sites ({sites.length})</div>
+              {sites.map(s=>(
+                <div key={s.id} className={`li ${site?.id===s.id?"act":""}`} onClick={()=>doPickSite(s)}>
+                  <span className="li-ic">🌐</span>
+                  <div className="f1" style={{minWidth:0}}>
+                    <div style={{fontWeight:600,fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.displayName||s.shortName}</div>
+                    <div className="slug">{s.shortName}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Pages */}
+          {site&&(
+            <div className="sec">
+              <div className="sec-lbl">Pages {pages.length>0&&`(${pages.length})`}</div>
+              {conn==="on"&&(
+                <button className="btn btn-o btn-sm" style={{marginBottom:8,width:"100%"}} onClick={()=>analyzePages(pages)} disabled={isAna||pages.length===0}>
+                  {isAna?<><div className="spin"/>Analyzing schema…</>:"Analyze Schema Status"}
+                </button>
+              )}
+              <div className="sw">
+                <span className="s-ic">🔍</span>
+                <input className="inp s-inp" placeholder="Search pages..." value={psearch} onChange={e=>setPsearch(e.target.value)}/>
+              </div>
+              <div className="ls">
+                {isLP?(
+                  <div className="row" style={{padding:"10px 8px",color:"var(--text2)",fontSize:12}}><div className="spin"/>Loading pages…</div>
+                ):fp.length===0?(
+                  <div style={{padding:"8px 8px",fontSize:12,color:"var(--text3)"}}>No pages found</div>
+                ):fp.map(p=>(
+                  <div key={p.id} className={`li ${page?.id===p.id?"act":""}`} onClick={()=>doPickPage(p)}>
+                    <span className="li-ic">{p.slug==="/"?"🏠":"📄"}</span>
+                    <div className="f1" style={{minWidth:0}}>
+                      <div className="row" style={{gap:4,flexWrap:"wrap"}}>
+                        <span style={{fontWeight:600,fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</span>
+                        {p.draft&&<span className="tag tag-draft">draft</span>}
+                        {injd.has(p.id)&&<span className="tag tag-ok">✓ schema</span>}
+                        {schemaMap[p.id]?.has&&<span className="tag tag-blue">{schemaMap[p.id].type || "schema"}</span>}
+                      </div>
+                      <div className="slug">{p.slug}</div>
+                      {schemaMap[p.id]?.title&&<div className="slug" style={{color:"var(--text2)",fontSize:10}}>title: {schemaMap[p.id].title}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Main */}
+        <div className="main">
+          {!page?(
+            <div className="empty">
+              <div className="e-ic">⚡</div>
+              <div className="e-t">
+                {conn==="off"?"Connect Webflow to get started":!site?"Select a site from the sidebar":"Select a page to add schema markup"}
+              </div>
+              <div className="e-d">
+                {conn==="off"?"Enter your API keys and click Connect, or use Demo Mode to explore the UI"
+                  :!site?"Click any Webflow site on the left to view its pages"
+                  :"Pick any page from the list — we'll generate structured data for it with AI"}
+              </div>
+            </div>
+          ):(
+            <>
+              {/* Page header */}
+              <div className="main-hdr">
+                <span style={{fontSize:18}}>{page.slug==="/"?"🏠":"📄"}</span>
+                <div className="f1">
+                  <div style={{fontWeight:700,fontSize:14}}>{page.title}</div>
+                  <div className="slug" style={{fontSize:11}}>{site?.shortName}{page.slug}</div>
+                  {schemaMap[page.id]?.has&&<div className="slug" style={{fontSize:11,color:"var(--accent)"}}>Schema: {schemaMap[page.id].type}{schemaMap[page.id].title?` — ${schemaMap[page.id].title}`:""}</div>}
+                </div>
+                {mode==="static"&&injd.has(page.id)&&<span className="badge b-ok"><span className="bdot" style={{background:"var(--ok)"}}/>Schema Live</span>}
+                <a href="https://validator.schema.org/" target="_blank" rel="noopener" className="btn btn-o btn-sm" style={{textDecoration:"none"}}>Rich Results Test ↗</a>
+              </div>
+
+              {/* Schema type tabs */}
+              <div className="tabs">
+                {ST.map(t=>(
+                  <div key={t.id} className={`tab ${stype===t.id?"act":""}`} onClick={()=>doType(t.id)}>
+                    <span style={{fontSize:13}}>{t.em}</span>{t.label}
+                  </div>
+                ))}
+              </div>
+
+              {/* Scrollable content */}
+              <div className="mscr">
+                <div className="sdesc">
+                  <strong style={{color:"var(--text1)"}}>{aST?.em} {aST?.label} Schema</strong>
+                  {" — "}{aST?.desc}
+                </div>
+
+                <div className="card">
+                  <div className="ctitle" style={{marginBottom:8}}>Automation Mode</div>
+                  <div className="row" style={{gap:6}}>
+                    <button className={`btn btn-sm ${mode==="static"?"btn-p":"btn-o"}`} onClick={()=>setMode("static")}>Static Page</button>
+                    <button className={`btn btn-sm ${mode==="cms"?"btn-p":"btn-o"}`} onClick={()=>setMode("cms")}>CMS Template</button>
+                  </div>
+                  {mode==="cms"&&(
+                    <div className="mt8">
+                      <select className="inp" value={collectionId} onChange={e=>loadCollectionItems(e.target.value)} style={{marginBottom:8}}>
+                        <option value="">-- Select Collection --</option>
+                        {collections.map(c=><option key={c.id} value={c.id}>{c.displayName||c.slug||c.id}</option>)}
+                      </select>
+                      <select className="inp" value={itemId} onChange={e=>{ const id=e.target.value; setItemId(id); const it=items.find(x=>x.id===id); setItemFieldData((it&&it.fieldData)||{}); if(it) loadExistingCmsSchema(it, schemaFieldKey); }} style={{marginBottom:8}}>
+                        <option value="">-- Select Item --</option>
+                        {items.map(it=><option key={it.id} value={it.id}>{it.fieldData?.name || it.fieldData?.title || it.fieldData?.slug || it.id}</option>)}
+                      </select>
+                      <div style={{maxHeight:140,overflowY:"auto",border:"1px solid var(--border)",borderRadius:"var(--r1)",padding:"8px 10px",marginBottom:8,background:"var(--bg)"}}>
+                        <div className="rb" style={{marginBottom:6}}>
+                          <div className="slug">Multi select blog items ({selectedItemIds.length})</div>
+                          <div className="row" style={{gap:6}}>
+                            <button type="button" className="btn btn-o btn-sm" onClick={selectAllItems}>All</button>
+                            <button type="button" className="btn btn-o btn-sm" onClick={clearSelectedItems}>Clear</button>
+                          </div>
+                        </div>
+                        {items.map(it=>(
+                          <label key={`multi_${it.id}`} className="row" style={{fontSize:11,color:"var(--text2)",marginBottom:4,gap:6}}>
+                            <input type="checkbox" checked={selectedItemIds.includes(it.id)} onChange={()=>toggleSelectedItem(it.id)} />
+                            <span>{it.fieldData?.name || it.fieldData?.title || it.fieldData?.slug || it.id}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <input className="inp" value={schemaFieldKey} onChange={e=>setSchemaFieldKey(e.target.value)} placeholder="Schema field key (e.g. schema-jsonld)" />
+                      {cmsSchemaInfo.has&&<div className="slug" style={{fontSize:11,color:"var(--accent)",marginTop:6}}>CMS existing schema: {cmsSchemaInfo.type}{cmsSchemaInfo.title?` — ${cmsSchemaInfo.title}`:""}</div>}
+                      <div className="row mt8" style={{justifyContent:"flex-end"}}>
+                        <button className="btn btn-o btn-sm" onClick={ensureSchemaField} disabled={isFieldBusy}>
+                          {isFieldBusy?<><div className="spin"/>Preparing field…</>:"Create/Check Schema Field"}
+                        </button>
+                        <button className="btn btn-o btn-sm" onClick={()=>{ const it=items.find(x=>x.id===itemId); if(it) loadExistingCmsSchema(it, schemaFieldKey); else tk("Select CMS item first","error"); }}>
+                          Load Existing Schema
+                        </button>
+                        <button className="btn btn-o btn-sm" onClick={doBotBindField} disabled={isBot||!settingsUrl.trim()}>
+                          {isBot?<><div className="spin"/>Binding…</>:"🤖 Bind Field in Template"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {mode==="static"&&<div className="card">
+                  <div className="rb" style={{marginBottom:8}}>
+                    <div className="ctitle" style={{margin:0}}>Page Analytics Default</div>
+                    <button className="btn btn-o btn-sm" onClick={()=>{ if(page){ setStype(recommended.type); setExtraTypes([]); refreshTemplateSchema(recommended.type, [], page); tk(`Default set: ${recommended.type.toUpperCase()}`,"success"); }}}>
+                      Apply Default
+                    </button>
+                  </div>
+                  <div style={{fontSize:12,color:"var(--text2)"}}>
+                    Recommended type for this page: <strong style={{color:"var(--text1)"}}>{recommended.type.toUpperCase()}</strong> {recommended.why?`(${recommended.why})`:""}
+                    <span style={{marginLeft:8,color:"var(--accent)"}}>Detected pageType: {detectedPageType}</span>
+                  </div>
+                  <div className="row mt8" style={{flexWrap:"wrap",gap:6}}>
+                    {extraOptions.map(t=>(
+                      <button key={t.id} className={`btn btn-sm ${extraTypes.includes(t.id)?"btn-p":"btn-o"}`} onClick={()=>toggleExtraType(t.id)}>
+                        {extraTypes.includes(t.id)?"✓ ":"+"}{t.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{fontSize:11,color:"var(--text3)",marginTop:8}}>
+                    Extra options create combined structured data using <code>@graph</code>.
+                  </div>
+                  <div className="row mt8" style={{justifyContent:"flex-end"}}>
+                    <button className="btn btn-p btn-sm" onClick={doGenerateAnalytics} disabled={isGen}>
+                      {isGen?<><div className="spin"/>Generating…</>:"✨ Generate AI (Analytics Default)"}
+                    </button>
+                  </div>
+                </div>}
+                {mode==="cms"&&<div className="card">
+                  <div className="rb" style={{marginBottom:8}}>
+                    <div className="ctitle" style={{margin:0}}>CMS Analytics Default</div>
+                    <button className="btn btn-o btn-sm" onClick={doGenerateAnalytics} disabled={isGen||!canWork}>
+                      {isGen?<><div className="spin"/>Generating…</>:"✨ Generate AI (CMS Default)"}
+                    </button>
+                  </div>
+                  <div style={{fontSize:12,color:"var(--text2)"}}>
+                    Selected item: <strong style={{color:"var(--text1)"}}>{targetTitle || "—"}</strong>
+                    <span style={{marginLeft:8,color:"var(--accent)"}}>slug: {targetSlug}</span>
+                  </div>
+                  {cmsSchemaInfo.has&&<div className="slug" style={{fontSize:11,color:"var(--accent)",marginTop:8}}>Existing CMS schema: {cmsSchemaInfo.type}{cmsSchemaInfo.title?` — ${cmsSchemaInfo.title}`:""}</div>}
+                </div>}
+
+                {/* AI Generator */}
+                <div className="card">
+                  <div className="rb" style={{marginBottom:10}}>
+                    <div className="ctitle" style={{margin:0}}>AI Schema Generator</div>
+                    {conn!=="dm"&&!aiReady&&useLocalApi()&&<span style={{fontSize:10,color:"var(--warn)"}}>⚠ Set OPENAI_API_KEY in server .env</span>}
+                  </div>
+                  <div style={{fontSize:11,color:"var(--text3)",marginBottom:8}}>Description / context (optional). If empty, page analytics context is used automatically.</div>
+                  <textarea
+                    className="inp"
+                    style={{minHeight:72,resize:"vertical",fontFamily:"var(--ui)",lineHeight:1.6,fontSize:12}}
+                    placeholder={`Describe this page or paste its key content...\n\nExample: "FAQ page answering questions about our Webflow development services, pricing, timelines, and support."`}
+                    value={ctx}
+                    onChange={e=>setCtx(e.target.value)}
+                  />
+                  {conn==="dm"&&<div className="info mt8">Demo mode uses templates. Connect a real static page for direct sync attempts.</div>}
+                  <div className="row mt8" style={{justifyContent:"flex-end"}}>
+                    <button className="btn btn-p" onClick={doGenerate} disabled={isGen}>
+                      {isGen?<><div className="spin"/>Generating…</>:"✨ Generate with AI"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Schema Editor */}
+                <div className="card">
+                  <div className="rb" style={{marginBottom:10}}>
+                    <div className="ctitle" style={{margin:0}}>JSON-LD Editor</div>
+                    <div className="row" style={{gap:5}}>
+                      <button className="btn btn-o btn-sm" onClick={doFormat}>Format</button>
+                      <button className="btn btn-o btn-sm" onClick={doValidate}>Validate</button>
+                      <button className="btn btn-o btn-sm" onClick={doCopy}>Copy</button>
+                    </div>
+                  </div>
+                  <textarea className="sch-ed" value={schema} onChange={e=>{setSchema(e.target.value);setValid(null);}} spellCheck={false}/>
+                </div>
+
+                {/* Validation */}
+                {valid&&(
+                  <div className="card">
+                    <div className="ctitle">Validation Results</div>
+                    {valid.map((v,i)=>(
+                      <div key={i} className="vrow">
+                        <span className="vic" style={{color:v.ok?"var(--ok)":"var(--err)"}}>{v.ok?"✓":"✗"}</span>
+                        <span style={{color:v.ok?"var(--text1)":"var(--err)",fontSize:12}}>{v.msg}</span>
+                      </div>
+                    ))}
+                    <div className="mt8" style={{fontSize:11,color:valid.every(v=>v.ok)?"var(--ok)":"var(--warn)"}}>
+                      {valid.every(v=>v.ok)?"✓ All checks passed – ready to inject":`${valid.filter(v=>!v.ok).length} issue(s) found – fix before injecting`}
+                    </div>
+                  </div>
+                )}
+
+                {/* Inject */}
+                <div className="card" style={{background:"var(--surface)"}}>
+                  <div className="rb">
+                    <div>
+                      <div style={{fontWeight:700,marginBottom:4,fontSize:13}}>Sync Schema to Webflow</div>
+                      <div style={{fontSize:11,color:"var(--text2)"}}>Static page automation mode: choose target field and app pushes schema via Webflow API.</div>
+                      {mode==="static"&&(
+                        <div className="row mt8" style={{gap:6,flexWrap:"wrap"}}>
+                          <button className={`btn btn-sm ${injectTarget==="schemaField"?"btn-p":"btn-o"}`} onClick={()=>setInjectTarget("schemaField")}>Schema field</button>
+                          <button className={`btn btn-sm ${injectTarget==="headCode"?"btn-p":"btn-o"}`} onClick={()=>setInjectTarget("headCode")}>Custom code head</button>
+                          <button className={`btn btn-sm ${injectTarget==="bodyCode"?"btn-p":"btn-o"}`} onClick={()=>setInjectTarget("bodyCode")}>Custom code body</button>
+                        </div>
+                      )}
+                      <label className="row mt8" style={{fontSize:11,color:"var(--text2)",gap:6}}>
+                        <input type="checkbox" checked={autoPublish} onChange={e=>setAutoPublish(e.target.checked)} />
+                        Auto publish site after sync
+                      </label>
+                      <input className="inp mt8" value={settingsUrl} onChange={e=>setSettingsUrl(e.target.value)} placeholder="Webflow Page Settings URL for Browser Bot (optional)" />
+                    </div>
+                    <div className="row" style={{gap:6}}>
+                      <button className="btn btn-o" style={{minWidth:150}} onClick={doBotSync} disabled={isBot||!schema.trim()}>
+                        {isBot?<><div className="spin"/>Bot syncing…</>:"🤖 Sync via Browser Bot"}
+                      </button>
+                    <button className="btn btn-p" style={{minWidth:130}} onClick={doInject} disabled={isInj||isPub||isBulk||!schema.trim()}>
+                      {isBulk?<><div className="spin"/>Bulk Sync…</>:isInj?<><div className="spin"/>Syncing…</>:isPub?<><div className="spin"/>Publishing…</>:injd.has(page.id)?"↻ Re-sync":"⚡ Sync Schema"}
+                      </button>
+                    </div>
+                  </div>
+                  {injd.has(page.id)&&<div className="info mt12" style={{background:"var(--ok-d)",borderColor:"rgba(63,185,80,.35)",color:"var(--ok)"}}>✓ Schema saved via API. Publish your Webflow site to make changes live, then verify with Google's Rich Results Test.</div>}
+                  {!injd.has(page.id)&&conn!=="dm"&&<div className="info mt12">After injecting, publish your Webflow site. Use <a href="https://search.google.com/test/rich-results" target="_blank" rel="noopener" style={{color:"var(--blue)"}}>Google Rich Results Test</a> to verify the schema is working correctly.</div>}
+                </div>
+
+                {/* Schema preview as script tag */}
+                {schema&&(
+                  <div className="card">
+                    <div className="ctitle">Generated Script Tag (Page Head)</div>
+                    <div style={{background:"var(--bg)",border:"1px solid var(--border)",borderRadius:"var(--r1)",padding:"13px",fontFamily:"var(--code)",fontSize:10,color:"var(--text2)",lineHeight:1.7,overflowX:"auto"}}>
+                      <span style={{color:"#f0883e"}}>&lt;script</span>
+                      <span style={{color:"#79c0ff"}}> type</span>
+                      <span style={{color:"#a5d6ff"}}>="application/ld+json"</span>
+                      <span style={{color:"#f0883e"}}>&gt;</span>
+                      <br/>
+                      <span style={{color:"#7ee8d6"}}>{schema.split("\n").map((l,i)=><span key={i}>{l}<br/></span>)}</span>
+                      <span style={{color:"#f0883e"}}>&lt;/script&gt;</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      <Toast t={toast} onClose={()=>setToast(null)}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
